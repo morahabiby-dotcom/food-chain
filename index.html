@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Food Chain Fun</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f1f8e9;--card:#fff;--ink:#1b3a1b;--acc:#43a047;--warn:#fb8c00;--slot:#e8f5e9;--line:#81c784;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14261a;--card:#1f3a28;--ink:#eaf7ea;--acc:#66bb6a;--warn:#ffb74d;--slot:#183222;--line:#4a8a55;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14261a;--card:#1f3a28;--ink:#eaf7ea;--acc:#66bb6a;--warn:#ffb74d;--slot:#183222;--line:#4a8a55;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Comic Sans MS","Trebuchet MS",Arial,sans-serif;text-align:center;padding:14px;max-width:760px;margin:auto}
+h1{font-size:clamp(24px,6vw,36px);margin:6px 0}
+.msg{font-size:clamp(17px,4.4vw,22px);min-height:56px;margin:8px 0}
+.row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;margin:10px 0}
+.slot,.card{width:clamp(70px,19vw,100px);height:clamp(84px,22vw,116px);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(34px,10vw,52px)}
+.slot{background:var(--slot);border:3px dashed var(--line);font-size:16px}
+.slot.full{border:3px solid var(--acc);background:var(--card)}
+.card{background:var(--card);border:3px solid var(--line);cursor:pointer;box-shadow:0 3px 0 var(--line);font-family:inherit;color:var(--ink)}
+.card:active{transform:scale(.95)}
+.card small,.slot small{font-size:clamp(13px,3.6vw,17px);font-weight:bold}
+.arrow{font-size:clamp(26px,7vw,38px);color:#e53935;font-weight:bold}
+.shake{animation:sh .4s}@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:30px;padding:12px 28px;font-size:clamp(18px,5vw,24px);font-family:inherit;cursor:pointer;margin:6px}
+.btn.alt{background:var(--warn)}
+.stars{font-size:28px;min-height:36px}
+.hint{font-size:15px;opacity:.85}
+.big{font-size:clamp(70px,22vw,120px);margin:6px}
+</style></head><body>
+<h1>🌱 Food Chain Fun 🦁</h1>
+<div class="stars" id="stars"></div>
+<div class="msg" id="msg"></div>
+<div id="game"></div>
+<script>
+var CH=[
+ {n:"Grass → Impala → Lion",t:["🌿|grass","🦌|impala","🦁|lion"]},
+ {n:"Plant → Mouse → Owl",t:["🌱|plant","🐭|mouse","🦉|owl"]},
+ {n:"Grass → Rabbit → Fox",t:["🌾|grass","🐰|rabbit","🦊|fox"]},
+ {n:"Plant → Slug → Frog → Heron",t:["🌱|plant","🐌|slug","🐸|frog","🐦|heron"]},
+ {n:"Plant → Aphid → Spider → Bird → Owl",t:["🌱|plant","🐜|aphid","🕷️|spider","🐦|bird","🦉|owl"]}];
+var PC=[["🌱","plant","p"],["🌿","grass","p"],["🌳","tree","p"],["🦁","lion","c"],["🐸","frog","c"],["🐰","rabbit","c"],["🦉","owl","c"],["🐌","slug","c"]];
+var lvl=0,stars=0,pos=0,pcI=0,G=document.getElementById("game"),M=document.getElementById("msg");
+function sh(a){return a.map(function(x){return[Math.random(),x]}).sort(function(a,b){return a[0]-b[0]}).map(function(p){return p[1]})}
+function st(){document.getElementById("stars").textContent="⭐".repeat(stars)}
+function start(){lvl=0;stars=0;st();G.innerHTML='<div class="big">🌱➜🐛➜🐦</div><p class="msg">A food chain shows who eats what.<br>The arrow ➜ means “is eaten by”.<br>Every food chain starts with a plant!</p><button class="btn" id="go">Let’s play! ▶</button>';M.textContent="";document.getElementById("go").onclick=level}
+function level(){
+ var c=CH[lvl];pos=0;var items=c.t.map(function(s){return s.split("|")});
+ M.textContent="Level "+(lvl+1)+" of "+CH.length+": Tap the cards in order. Start with the plant! 🌱";
+ var html='<div class="row" id="slots">';
+ items.forEach(function(_,i){html+=(i?'<span class="arrow">➜</span>':'')+'<div class="slot" id="s'+i+'">'+(i+1)+'</div>'});
+ html+='</div><div class="row" id="bank"></div><p class="hint">Mixed up cards ⬆⬇ tap the one that comes next</p>';
+ G.innerHTML=html;var bank=document.getElementById("bank");
+ sh(items.map(function(x,i){return[x,i]})).forEach(function(p){
+  var b=document.createElement("button");b.className="card";b.innerHTML=p[0][0]+"<small>"+p[0][1]+"</small>";
+  b.onclick=function(){
+   if(p[1]===pos){var s=document.getElementById("s"+pos);s.className="slot full";s.innerHTML=p[0][0]+"<small>"+p[0][1]+"</small>";b.remove();pos++;
+    if(pos===items.length)done(c)}
+   else{b.classList.remove("shake");void b.offsetWidth;b.classList.add("shake");M.textContent=pos===0?"Try again! Look for the plant 🌱 — it comes first.":"Not yet! Who eats the "+items[pos-1][1]+"? 🤔"}};
+  bank.appendChild(b)})}
+function done(c){stars++;st();M.textContent="🎉 Great job! "+c.n;
+ var b=document.createElement("button");b.className="btn";b.textContent=lvl<CH.length-1?"Next ▶":"Last game ▶";b.onclick=function(){lvl++;lvl<CH.length?level():pc()};G.appendChild(b)}
+function pc(){
+ pcI=0;var q=sh(PC);
+ (function ask(){
+  if(pcI>=q.length){fin();return}
+  var x=q[pcI];M.textContent="Bonus "+(pcI+1)+" of "+q.length+": Is it a PRODUCER (plant) or a CONSUMER (animal)?";
+  G.innerHTML='<div class="big">'+x[0]+'</div><div class="msg"><b>'+x[1]+'</b></div><button class="btn" data-a="p">🌱 Producer</button><button class="btn alt" data-a="c">🐾 Consumer</button>';
+  G.querySelectorAll(".btn").forEach(function(b){b.onclick=function(){
+   if(b.dataset.a===x[2]){stars++;st();M.textContent="✅ Yes! "+(x[2]==="p"?"Plants make food. They are producers.":"Animals eat food. They are consumers.");pcI++;setTimeout(ask,1300)}
+   else{M.textContent="Oops! Think: does it make food, or eat food? Try again!"}}})
+ })()}
+function fin(){M.textContent="";G.innerHTML='<div class="big">🏆</div><p class="msg">You finished! You are a Food Chain Scientist!<br>You collected '+stars+' ⭐</p><button class="btn" id="again">Play again 🔁</button>';document.getElementById("again").onclick=start}
+start();
+</script></body></html>
